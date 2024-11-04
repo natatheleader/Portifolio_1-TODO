@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id           Int             @id @default(autoincrement())
+  email             String          @unique
+  password          String
+  username          String
+  created_at        DateTime
+  last_login        DateTime?
+  theme_pref        String          @default("light")
+
+  categories        categories[]
+}
+
+model categories {
+  id                Int             @id @default(autoincrement())
+  user              User            @relation(fields: [user_id], references: [user_id])
+  user_id           Int             // relation scalar field  (used in the `@relation` attribute above)
+  name              String          @unique
+  color             String          @default("#000000")
+  created_at        DateTime        @default(now())
+}
+
+model tags {
+  id                Int             @id @default(autoincrement())
+  user              User            @relation(fields: [user_id], references: [user_id])
+  user_id           Int             // relation scalar field  (used in the `@relation` attribute above)
+  name              String
+  created_at        DateTime        @default(now())
+}
+
+model tasks {
+  id                Int             @id @default(autoincrement())
+  user              User            @relation(fields: [user_id], references: [user_id])
+  user_id           Int             // relation scalar field  (used in the `@relation` attribute above)
+  category          categories?     @relation(fields: [category_id], references: [id])
+  category_id       Int?            // relation scalar field  (used in the `@relation` attribute above)
+  title             String
+  description       TEXT?
+  priority          Int             @default(3)
+  due_date          DateTime?
+  reminder_time     DateTime?
+  status            String          @default("pending")
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @default(now())
+}
+
+model task_tags {
+  task              tasks           @relation(fields: [task_id], references: [id])
+  tag               tags            @relation(fields: [tag_id], references: [id])
+  task_id           Int             // relation scalar field  (used in the `@relation` attribute above)
+  tag_id            Int             // relation scalar field  (used in the `@relation` attribute above)
+}
+
+model task_history {
+  id                Int             @id @default(autoincrement())
+  task              tasks           @relation(fields: [task_id], references: [id])
+  task_id           Int             // relation scalar field  (used in the `@relation` attribute above)
+  status_from       String
+  status_to         String
+  changed_at        DateTime        @default(now())
+}
