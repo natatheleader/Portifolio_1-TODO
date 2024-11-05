@@ -23,6 +23,8 @@ model User {
   theme_pref        String          @default("light")
 
   categories        categories[]
+  tags              tags[]
+  tasks             tasks[]
 }
 
 model categories {
@@ -32,14 +34,18 @@ model categories {
   name              String          @unique
   color             String          @default("#000000")
   created_at        DateTime        @default(now())
+
+  tasks             tasks[]
 }
 
 model tags {
   id                Int             @id @default(autoincrement())
-  user              User            @relation(fields: [user_id], references: [user_id])
   user_id           Int             // relation scalar field  (used in the `@relation` attribute above)
+  user              User            @relation(fields: [user_id], references: [user_id])
   name              String
   created_at        DateTime        @default(now())
+
+  task_tags         task_tags[]
 }
 
 model tasks {
@@ -49,16 +55,20 @@ model tasks {
   category          categories?     @relation(fields: [category_id], references: [id])
   category_id       Int?            // relation scalar field  (used in the `@relation` attribute above)
   title             String
-  description       TEXT?
+  description       String?         @db.Text
   priority          Int             @default(3)
   due_date          DateTime?
   reminder_time     DateTime?
   status            String          @default("pending")
   created_at        DateTime        @default(now())
   updated_at        DateTime        @default(now())
+
+  task_tags         task_tags[]
+  task_history      task_history[]
 }
 
 model task_tags {
+  id                Int             @id @default(autoincrement())
   task              tasks           @relation(fields: [task_id], references: [id])
   tag               tags            @relation(fields: [tag_id], references: [id])
   task_id           Int             // relation scalar field  (used in the `@relation` attribute above)
