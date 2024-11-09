@@ -51,9 +51,19 @@ app.get(
       res.status(400).json({ error: "Authentication failed" });
     }
     // return user details
-    res.status(200).json(req.user);
+    res.status(200).redirect("/profile");
   }
 );
+
+app.get("/profile", (req, res) => {
+  res.send(`Welcome ${req.user.displayName}`)
+});
+
+app.get("/logout", (req, res) => {
+  req.logout(() => {
+    res.redirect("/");
+  });
+})
 
 // a function to start the server  and listen to the port defined
 const start = async () => {
