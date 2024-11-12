@@ -1,6 +1,10 @@
 // import necessary dependencies
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+// import User from "../models/User";
+
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
 
 //initialize 
 passport.use(
@@ -16,25 +20,45 @@ passport.use(
 
 // returns the authenticated email profile
  async function (request, accessToken, refreshToken, profile, done) {
- // you can write some algorithms here based on your application models and all
- // an example - not related to this application
+  try {
+    // Check if user exists in database
+    const existingUser = await prisma.user.findUnique({
+      where: { 
+        email: profile.emails[0].value
+      } 
+    })
+    // const existingUser = await User.findOne({ email: profile.emails[0].value });
 
-/*
-   const exist = await User.findOne({ email: profile["emails"][0].value });
-   if (!exist) {
-        await User.create({
-        email: profile["emails"][0].value,
-          fullName: profile["displayName"],
-          avatar: profile["photos"][0].value,
-          username: profile["name"]["givenName"],
-          verified: true,
-        });
-      }
-    const user = await User.findOne({ email: profile["emails"][0].value });
- return done(null, user);
-*/
-     return done(null, profile);
+    if (existingUser) {
+      // If user exists, return the user
+      return done(null, existingUser);
     }
+
+    // If user doesn't exist, create new user
+    const newUser = await prisma.user.create({ 
+      data: {
+        email: profile.emails[0].value,
+        fullName: profile.name.displayName,
+        avatar: profile.photos[0].value,
+        username: profile.name.givenName,
+        password: "Google",
+        verified: true, 
+      } 
+    })
+    // const newUser = await User.create({
+    //   email: profile.emails[0].value,
+    //   fullName: profile.displayName,
+    //   avatar: profile.photos[0].value,
+    //   username: profile.name.givenName,
+    //   verified: true,
+    //   // Add any other fields you need
+    // });
+
+    return done(null, newUser);
+  } catch (error) {
+    return done(error, null);
+  }
+}
   )
 );
 
