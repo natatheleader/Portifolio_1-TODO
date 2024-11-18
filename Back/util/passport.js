@@ -38,21 +38,15 @@ passport.use(
     const newUser = await prisma.user.create({ 
       data: {
         email: profile.emails[0].value,
-        fullName: profile.name.displayName,
+        full_name: profile.displayName,
         avatar: profile.photos[0].value,
         username: profile.name.givenName,
         password: "Google",
-        verified: true, 
+        verified: true,
       } 
     })
-    // const newUser = await User.create({
-    //   email: profile.emails[0].value,
-    //   fullName: profile.displayName,
-    //   avatar: profile.photos[0].value,
-    //   username: profile.name.givenName,
-    //   verified: true,
-    //   // Add any other fields you need
-    // });
+
+    // apply jwt and generate token and everything
 
     return done(null, newUser);
   } catch (error) {

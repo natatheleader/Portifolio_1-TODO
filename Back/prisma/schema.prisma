@@ -19,10 +19,12 @@ model User {
   password          String
   avatar            String
   username          String
-  fullname          String
-  created_at        DateTime
-  last_login        DateTime?
+  full_name         String
+  created_at        DateTime        @default(now())
+  last_login        DateTime?       @default(now())
   theme_pref        String          @default("light")
+
+  verified          Boolean         @default(false)
 
   categories        categories[]
   tags              tags[]
@@ -35,7 +37,8 @@ model categories {
   user_id           Int             // relation scalar field  (used in the `@relation` attribute above)
   name              String          @unique
   color             String          @default("#000000")
-  created_at        DateTime        @default(now())
+  created_at        DateTime        @default(now()) 
+  updated_at        DateTime        @default(now())
 
   tasks             tasks[]
 }
@@ -46,6 +49,7 @@ model tags {
   user              User            @relation(fields: [user_id], references: [user_id])
   name              String
   created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
 
   task_tags         task_tags[]
 }
@@ -63,7 +67,7 @@ model tasks {
   reminder_time     DateTime?
   status            String          @default("pending")
   created_at        DateTime        @default(now())
-  updated_at        DateTime        @default(now())
+  updated_at        DateTime       @updatedAt
 
   task_tags         task_tags[]
   task_history      task_history[]

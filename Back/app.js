@@ -40,17 +40,15 @@ app.get(
 );
 
 // Call back route
-app.get(
-  "/auth/google/callback",
-  passport.authenticate("google", {
+app.get("/auth/google/callback", passport.authenticate("google", {
     access_type: "offline",
     scope: ["email", "profile"],
-  }),
-  (req, res) => {
+  }), (req, res) => {
     if (!req.user) {
       res.status(400).json({ error: "Authentication failed" });
     }
     // return user details
+    // res.json(req.user)
     res.status(200).redirect("/profile");
   }
 );
