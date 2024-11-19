@@ -1,58 +1,57 @@
 // import necessary dependencies
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-// import User from "../models/User";
+import jwt from 'jsonwebtoken';
 
 import { PrismaClient } from '@prisma/client'
+
 const prisma = new PrismaClient()
 
 //initialize 
 passport.use(
   new GoogleStrategy(
     {
-
-      clientID: process.env.GOOGLE_CLIENT_ID, // google client id
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET, // google client secret
-      // the callback url added while creating the Google auth app on the console
-      callbackURL: "http://localhost:8000/auth/google/callback", 
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "http://localhost:8000/auth/google/callback",
       passReqToCallback: true,
     },
+    async function (request, accessToken, refreshToken, profile, done) {
+      try {
+        // Check if user exists in database
+        const existingUser = await prisma.user.findUnique({
+          where: { 
+            email: profile.emails[0].value
+          }
+        });
 
-// returns the authenticated email profile
- async function (request, accessToken, refreshToken, profile, done) {
-  try {
-    // Check if user exists in database
-    const existingUser = await prisma.user.findUnique({
-      where: { 
-        email: profile.emails[0].value
-      } 
-    })
-    // const existingUser = await User.findOne({ email: profile.emails[0].value });
+        let user;
+        if (existingUser) {
+          user = existingUser;
+        } else {
+          // Create new user if doesn't exist
+          user = await prisma.user.create({ 
+            data: {
+              email: profile.emails[0].value,
+              fullName: profile.displayName,
+              avatar: profile.photos[0].value,
+              username: profile.name.givenName,
+              verified: true,
+            } 
+          });
+        }
 
-    if (existingUser) {
-      // If user exists, return the user
-      return done(null, existingUser);
+        // Generate token
+        const token = generateToken(user);
+
+        // Attach token to user object
+        user.token = token;
+
+        return done(null, user);
+      } catch (error) {
+        return done(error, null);
+      }
     }
-
-    // If user doesn't exist, create new user
-    const newUser = await prisma.user.create({ 
-      data: {
-        email: profile.emails[0].value,
-        full_name: profile.displayName,
-        avatar: profile.photos[0].value,
-        username: profile.name.givenName,
-        password: "Google",
-        verified: true,
-      } 
-    })
-
-    // apply jwt and generate token and everything
-
-    return done(null, newUser);
-  } catch (error) {
-    return done(error, null);
-  }
-}
   )
 );
 
@@ -65,3 +64,14 @@ passport.serializeUser(function (user, done) {
 passport.deserializeUser(function (user, done) {
   done(null, user);
 });
+
+const generateToken = (user) => {
+  return jwt.sign(
+    { 
+      id: user.id,
+      email: user.email
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+};
