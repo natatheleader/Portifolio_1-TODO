@@ -68,7 +68,7 @@ passport.deserializeUser(function (user, done) {
 const generateToken = (user) => {
   return jwt.sign(
     { 
-      id: user.id,
+      id: user.user_id,
       email: user.email
     },
     process.env.JWT_SECRET,

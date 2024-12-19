@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
 
 // Use auth routes
 app.use('/auth', authRoutes);
-app.use('/auth', catagoryRoutes);
+app.use('/catagory', catagoryRoutes);
 
 // a function to start the server  and listen to the port defined
 const start = async () => {
