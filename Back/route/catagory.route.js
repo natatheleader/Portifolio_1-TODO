@@ -14,7 +14,7 @@ const router = express.Router();
 router.get('/protected', verifyToken, protectedd);
 router.post('/create', verifyToken, create);
 router.get('/getAll', verifyToken, getAll);
-router.get('/getOne', verifyToken, getOne);
+router.get('/getOne/:id', verifyToken, getOne);
 router.put('/update', verifyToken, update);
 router.delete('/delete', verifyToken, deleteOne);
 

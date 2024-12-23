@@ -13,19 +13,18 @@ export const protectedd = (req, res) => {
 export const create = async (req, res) => {
     try {
         const { name, color } = req.body;
-        console.log(req.user);
-        // Create category with user ID from authenticated user
-        const category = await prisma.category.create({
+        // Create catagory with user ID from authenticated user
+        const catagory = await prisma.catagory.create({
             data: {
                 name,
                 color,
-                userId: req.user.id  // Make sure this matches your Prisma schema field name
+                user_id: req.user.id  // Make sure this matches your Prisma schema field name
             },
         });
 
         res.status(201).json({
             success: true,
-            data: category
+            data: catagory
         });
     } catch (error) {
         res.status(400).json({
@@ -37,10 +36,14 @@ export const create = async (req, res) => {
 
 export const getAll = async (req, res) => {
     try {
-        const categories = await prisma.category.findMany();
+        const catagories = await prisma.catagory.findMany({
+            where: {
+                user_id: req.user.id
+            }
+        });
         res.status(200).json({
             success: true,
-            data: categories
+            data: catagories
         });
     } catch (error) {
         res.status(500).json({
@@ -52,12 +55,28 @@ export const getAll = async (req, res) => {
 
 export const getOne = async (req, res) => {
     try {
-        const category = await prisma.category.findUnique({
+        const catagoryId = parseInt(req.params.id);  // Get ID from URL parameter
+
+        const catagory = await prisma.catagory.findUnique({
             where: {
-                id: parseInt(req.params.id)
+                id: catagoryId,
+                user_id: req.user.id  // Add this to ensure user can only access their own categories
+            },
+            include: {
+                task: true  // This will include all related tasks
+                // If you want to select specific fields from tasks:
+                // tasks: {
+                //     select: {
+                //         id: true,
+                //         title: true,
+                //         description: true,
+                //         completed: true,
+                //         // ... other task fields you want
+                //     }
+                // }
             }
         });
-        if (!category) {
+        if (!catagory) {
             return res.status(404).json({
                 success: false,
                 message: 'Category not found'
@@ -65,7 +84,7 @@ export const getOne = async (req, res) => {
         }
         res.status(200).json({
             success: true,
-            data: category
+            data: catagory
         });
     } catch (error) {
         res.status(500).json({

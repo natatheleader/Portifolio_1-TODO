@@ -16,7 +16,7 @@ datasource db {
 model User {
   user_id           Int             @id @default(autoincrement())
   email             String          @unique
-  password          String
+  //password          String
   avatar            String
   username          String
   full_name         String
@@ -26,12 +26,12 @@ model User {
 
   verified          Boolean         @default(false)
 
-  categories        categories[]
-  tags              tags[]
-  tasks             tasks[]
+  catagory          Catagory[]
+  tag               Tag[]
+  task              Task[]
 }
 
-model categories {
+model Catagory {
   id                Int             @id @default(autoincrement())
   user              User            @relation(fields: [user_id], references: [user_id])
   user_id           Int             // relation scalar field  (used in the `@relation` attribute above)
@@ -40,10 +40,10 @@ model categories {
   created_at        DateTime        @default(now()) 
   updated_at        DateTime        @default(now())
 
-  tasks             tasks[]
+  task              Task[]
 }
 
-model tags {
+model Tag {
   id                Int             @id @default(autoincrement())
   user_id           Int             // relation scalar field  (used in the `@relation` attribute above)
   user              User            @relation(fields: [user_id], references: [user_id])
@@ -51,15 +51,15 @@ model tags {
   created_at        DateTime        @default(now())
   updated_at        DateTime        @updatedAt
 
-  task_tags         task_tags[]
+  task_tag          task_tag[]
 }
 
-model tasks {
+model Task {
   id                Int             @id @default(autoincrement())
   user              User            @relation(fields: [user_id], references: [user_id])
   user_id           Int             // relation scalar field  (used in the `@relation` attribute above)
-  category          categories?     @relation(fields: [category_id], references: [id])
-  category_id       Int?            // relation scalar field  (used in the `@relation` attribute above)
+  catagory          Catagory?       @relation(fields: [catagory_id], references: [id])
+  catagory_id       Int?            // relation scalar field  (used in the `@relation` attribute above)
   title             String
   description       String?         @db.Text
   priority          Int             @default(3)
@@ -69,21 +69,21 @@ model tasks {
   created_at        DateTime        @default(now())
   updated_at        DateTime       @updatedAt
 
-  task_tags         task_tags[]
+  task_tag          task_tag[]
   task_history      task_history[]
 }
 
-model task_tags {
+model task_tag {
   id                Int             @id @default(autoincrement())
-  task              tasks           @relation(fields: [task_id], references: [id])
-  tag               tags            @relation(fields: [tag_id], references: [id])
+  task              Task            @relation(fields: [task_id], references: [id])
+  tag               Tag             @relation(fields: [tag_id], references: [id])
   task_id           Int             // relation scalar field  (used in the `@relation` attribute above)
   tag_id            Int             // relation scalar field  (used in the `@relation` attribute above)
 }
 
 model task_history {
   id                Int             @id @default(autoincrement())
-  task              tasks           @relation(fields: [task_id], references: [id])
+  task              Task            @relation(fields: [task_id], references: [id])
   task_id           Int             // relation scalar field  (used in the `@relation` attribute above)
   status_from       String
   status_to         String
