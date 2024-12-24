@@ -8,6 +8,7 @@ import "./util/passport.js"
 import { verifyToken } from './middleware/auth.js';
 import authRoutes from './route/auth.route.js';
 import catagoryRoutes from './route/catagory.route.js';
+import tagRoutes from './route/tag.route.js';
 
 // intialize app and define the server port
 const app = express();
@@ -37,6 +38,7 @@ app.get("/", (req, res) => {
 // Use auth routes
 app.use('/auth', authRoutes);
 app.use('/catagory', catagoryRoutes);
+app.use('/tag', tagRoutes);
 
 // a function to start the server  and listen to the port defined
 const start = async () => {

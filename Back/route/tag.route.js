@@ -5,13 +5,11 @@ import {
   deleteOne,
   getAll,
   getOne,
-  protectedd,
   update
-} from '../controller/catagory.controller.js';
+} from '../controller/tag.controller.js';
 
 const router = express.Router();
 
-router.get('/protected', verifyToken, protectedd);
 router.post('/create', verifyToken, create);
 router.get('/getAll', verifyToken, getAll);
 router.get('/getOne/:id', verifyToken, getOne);
