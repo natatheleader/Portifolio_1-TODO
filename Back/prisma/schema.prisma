@@ -67,7 +67,7 @@ model Task {
   reminder_time     DateTime?
   status            String          @default("pending")
   created_at        DateTime        @default(now())
-  updated_at        DateTime       @updatedAt
+  updated_at        DateTime        @updatedAt
 
   task_tag          task_tag[]
   task_history      task_history[]
