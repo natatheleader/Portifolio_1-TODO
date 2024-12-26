@@ -66,6 +66,7 @@ model Task {
   due_date          DateTime?
   reminder_time     DateTime?
   status            String          @default("pending")
+  deleted_at        DateTime?       
   created_at        DateTime        @default(now())
   updated_at        DateTime        @updatedAt
 

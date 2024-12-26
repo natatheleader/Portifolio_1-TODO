@@ -151,7 +151,8 @@ export const getAll = async (req, res) => {
     try {
         const tasks = await prisma.task.findMany({
             where: {
-                user_id: req.user.id
+                user_id: req.user.id,
+                deleted_at: null 
             },
             include: {
                 catagory: true,
@@ -182,7 +183,8 @@ export const getOne = async (req, res) => {
         const task = await prisma.task.findUnique({
             where: {
                 id: taskId,
-                user_id: req.user.id  // Add this to ensure user can only access their own categories
+                user_id: req.user.id,   // Add this to ensure user can only access their own categories
+                deleted_at: null 
             },
             include: {
                 catagory: true,
@@ -214,45 +216,253 @@ export const getOne = async (req, res) => {
 
 export const update = async (req, res) => {
     try {
-        const tag = await prisma.tag.update({
+        const taskId = parseInt(req.body.id);
+        const { 
+            title, 
+            description,
+            priority,
+            due_date,
+            reminder_time,
+            status,
+            catagory_id,
+            tag_ids
+        } = req.body;
+
+        // First check if task exists and belongs to user
+        const existingTask = await prisma.task.findFirst({
             where: {
-                id: parseInt(req.body.id),
-                user_id: req.user.id
+                id: taskId,
+                user_id: req.user.id,
+                deleted_at: null
             },
-            data: {
-                name: req.body.name,
-            },
+            include: {
+                task_tag: true
+            }
         });
-        if (!tag) {
+
+        if (!existingTask) {
             return res.status(404).json({
                 success: false,
-                message: 'Tag not found'
+                message: 'Task not found or unauthorized'
             });
         }
+
+        // Validate dates if provided
+        let formattedDueDate = existingTask.due_date;
+        let formattedReminderTime = existingTask.reminder_time;
+        const now = new Date();
+
+        if (due_date) {
+            formattedDueDate = new Date(due_date);
+            if (isNaN(formattedDueDate)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid due date format'
+                });
+            }
+            // Check if due date is in the past
+            if (formattedDueDate < now) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Due date cannot be in the past'
+                });
+            }
+            formattedDueDate = formattedDueDate.toISOString();
+        }
+
+        if (reminder_time) {
+            formattedReminderTime = new Date(reminder_time);
+            if (isNaN(formattedReminderTime)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid reminder time format'
+                });
+            }
+            // Check if reminder time is in the past
+            if (formattedReminderTime < now) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Reminder time cannot be in the past'
+                });
+            }
+            // Check if reminder time is after due date
+            if (due_date && formattedReminderTime > new Date(due_date)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Reminder time must be before the due date'
+                });
+            }
+            formattedReminderTime = formattedReminderTime.toISOString();
+        }
+
+        // Validate priority if provided
+        if (priority && (priority < 1 || priority > 5)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Priority must be between 1 and 5'
+            });
+        }
+
+        // Validate category if provided
+        if (catagory_id) {
+            const category = await prisma.catagory.findFirst({
+                where: {
+                    id: catagory_id,
+                    user_id: req.user.id
+                }
+            });
+
+            if (!category) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Category not found or does not belong to user'
+                });
+            }
+        }
+
+        // Create task history if status is changed
+        let taskHistoryData = undefined;
+        if (status && status !== existingTask.status) {
+            taskHistoryData = {
+                create: {
+                    status_from: existingTask.status,
+                    status_to: status
+                }
+            };
+        }
+
+        // Handle tag updates if provided
+        let tagUpdateData = undefined;
+        if (tag_ids) {
+            // Delete existing tag relationships
+            await prisma.taskTag.deleteMany({
+                where: {
+                    task_id: taskId
+                }
+            });
+
+            // Prepare new tag relationships
+            tagUpdateData = {
+                createMany: {
+                    data: tag_ids.map(tag_id => ({
+                        tag_id: parseInt(tag_id)
+                    }))
+                }
+            };
+        }
+
+        // Update the task
+        const updatedTask = await prisma.task.update({
+            where: {
+                id: taskId
+            },
+            data: {
+                title: title || undefined,
+                description: description || undefined,
+                priority: priority || undefined,
+                due_date: formattedDueDate,
+                reminder_time: formattedReminderTime,
+                status: status || undefined,
+                catagory_id: catagory_id || undefined,
+                task_history: taskHistoryData,
+                task_tag: tagUpdateData
+            },
+            include: {
+                catagory: true,
+                task_tag: {
+                    include: {
+                        tag: true
+                    }
+                },
+                task_history: true
+            }
+        });
+
         res.status(200).json({
             success: true,
-            data: tag
+            data: updatedTask,
+            message: 'Task updated successfully'
+        });
+
+    } catch (error) {
+        console.error('Task update error:', error);
+        res.status(400).json({
+            success: false,
+            message: error.message || 'Failed to update task'
+        });
+    }
+};
+
+export const deleteOne = async (req, res) => {
+    try {
+        // Update task with deleted_at timestamp instead of deleting
+        const task = await prisma.task.update({
+            where: {
+                id: parseInt(req.params.id),
+                user_id: req.user.id,
+                deleted_at: null  // Ensure we can't "delete" an already deleted task
+            },
+            data: {
+                deleted_at: new Date(),
+                // Optionally add to task history
+                task_history: {
+                    create: {
+                        // status_from: 'active',
+                        status_to: 'deleted'
+                    }
+                }
+            }
+        });
+
+        if (!task) {
+            return res.status(404).json({
+                success: false,
+                message: 'Task not found or already deleted'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Task deleted successfully'
         });
     } catch (error) {
-        res.status(400).json({
+        res.status(500).json({
             success: false,
             message: error.message
         });
     }
 };
 
-export const deleteOne = async (req, res) => {
-    // make it soft delete
+export const restore = async (req, res) => {
     try {
-        const task = await prisma.task.delete({
+        const task = await prisma.task.update({
             where: {
                 id: parseInt(req.params.id),
-                user_id: req.user.id
+                user_id: req.user.id,
+                deleted_at: { not: null }  // Ensure task is deleted
+            },
+            data: {
+                deleted_at: null,
+                task_history: {
+                    create: {
+                        status_from: 'deleted',
+                        status_to: 'restored'
+                    }
+                }
             }
         });
+
+        if (!task) {
+            return res.status(404).json({
+                success: false,
+                message: 'Task not found or not deleted'
+            });
+        }
+
         res.status(200).json({
             success: true,
-            message: 'Task deleted successfully'
+            message: 'Task restored successfully',
+            data: task
         });
     } catch (error) {
         res.status(500).json({
