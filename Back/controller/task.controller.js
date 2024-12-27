@@ -395,6 +395,31 @@ export const update = async (req, res) => {
 
 export const deleteOne = async (req, res) => {
     try {
+        const existingTask = await prisma.task.findFirst({
+            where: {
+                id: parseInt(req.params.id),
+                user_id: req.user.id,
+                deleted_at: null
+            },
+            include: {
+                task_history: {
+                    orderBy: {
+                        changed_at: 'desc'  // Get the most recent history
+                    },
+                    take: 1
+                }
+            }
+        });
+
+        if (!existingTask) {
+            return res.status(404).json({
+                success: false,
+                message: 'Task not found or already deleted'
+            });
+        }
+
+        const currentStatus = existingTask.task_history[0]?.status_to || existingTask.status || 'unknown';
+
         // Update task with deleted_at timestamp instead of deleting
         const task = await prisma.task.update({
             where: {
@@ -407,28 +432,25 @@ export const deleteOne = async (req, res) => {
                 // Optionally add to task history
                 task_history: {
                     create: {
-                        // status_from: 'active',
+                        status_from: currentStatus,
                         status_to: 'deleted'
                     }
                 }
+            },
+            include: {
+                task_history: true
             }
         });
 
-        if (!task) {
-            return res.status(404).json({
-                success: false,
-                message: 'Task not found or already deleted'
-            });
-        }
-
         res.status(200).json({
             success: true,
-            message: 'Task deleted successfully'
+            message: 'Task deleted successfully',
+            data: task
         });
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message || 'Failed to delete task'
         });
     }
 };
