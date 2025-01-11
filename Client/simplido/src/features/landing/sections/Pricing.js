@@ -3,22 +3,37 @@ import React from 'react';
 const Pricing = () => {
   const plans = [
     {
-      name: 'Basic',
-      price: '$9',
-      features: ['Feature 1', 'Feature 2', 'Feature 3'],
-      cta: 'Start Basic'
+      name: 'Free',
+      price: '$0',
+      features: [
+        'Up to 10 tasks',
+        'Basic task management',
+        'Mobile access',
+        'Email support'
+      ],
+      cta: 'Start Free'
     },
     {
       name: 'Pro',
-      price: '$29',
-      features: ['Everything in Basic', 'Pro Feature 1', 'Pro Feature 2'],
+      price: '$9',
+      features: [
+        'Unlimited tasks',
+        'Advanced task management',
+        'Team collaboration',
+        'Priority support'
+      ],
       cta: 'Start Pro',
       popular: true
     },
     {
       name: 'Enterprise',
-      price: '$99',
-      features: ['Everything in Pro', 'Enterprise Feature 1', 'Enterprise Feature 2'],
+      price: 'Custom',
+      features: [
+        'Everything in Pro',
+        'Custom integrations',
+        'Dedicated support',
+        'SLA guarantee'
+      ],
       cta: 'Contact Sales'
     }
   ];

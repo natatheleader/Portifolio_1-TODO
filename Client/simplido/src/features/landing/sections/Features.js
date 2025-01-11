@@ -3,19 +3,19 @@ import React from 'react';
 const Features = () => {
   const features = [
     {
-      title: 'Feature 1',
-      description: 'Description of feature 1 goes here. Explain what makes this feature special.',
-      icon: '🚀'
+      title: 'Easy Task Management',
+      description: 'Create, organize, and track your tasks with our intuitive interface. Drag and drop functionality makes task management a breeze.',
+      icon: '✓'
     },
     {
-      title: 'Feature 2',
-      description: 'Description of feature 2 goes here. Explain what makes this feature special.',
-      icon: '⚡'
+      title: 'Smart Reminders',
+      description: 'Never miss a deadline with our intelligent reminder system. Get notifications across all your devices.',
+      icon: '⏰'
     },
     {
-      title: 'Feature 3',
-      description: 'Description of feature 3 goes here. Explain what makes this feature special.',
-      icon: '🎯'
+      title: 'Collaboration Tools',
+      description: 'Share tasks and projects with team members or family. Real-time updates keep everyone in sync.',
+      icon: '👥'
     }
   ];
 
