@@ -1,7 +1,9 @@
 import React from 'react';
 import Hero from './sections/Hero';
 import Features from './sections/Features';
-import Pricing from './sections/Pricing';
+import HowItWorks from './sections/HowItWorks';
+import Benefits from './sections/Benefits';
+import Testimonials from './sections/Testimonials';
 import Contact from './sections/Contact';
 
 const LandingPage = () => {
@@ -9,7 +11,9 @@ const LandingPage = () => {
     <div>
       <Hero />
       <Features />
-      <Pricing />
+      <HowItWorks />
+      <Benefits />
+      <Testimonials />
       <Contact />
     </div>
   );
